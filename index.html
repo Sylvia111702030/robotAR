@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe-mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/supabase.min.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
       .schedule-ui {
@@ -61,12 +62,10 @@
       </a-entity>
     </a-scene>
 
-    <script type="module">
-      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
+    <script>
       const supabaseUrl = 'https://rbqgkbjffzbcrwtxmnxn.supabase.co';
       const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJicWdrYmpmZnpiY3J3dHhtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MjY2NzYsImV4cCI6MjA2MjAwMjY3Nn0.g9jUWNE4D-33qnwYl47UsnxcxmKACZlDUbGabM3xpVE';
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
       window.addEventListener('DOMContentLoaded', () => {
         const targetA = document.querySelector('#target-a');
