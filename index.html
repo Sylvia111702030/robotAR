@@ -1,27 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR 行程 MVP</title>
-    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe-mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/supabase.min.js"></script>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      .schedule-ui {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        display: none;
-        z-index: 999;
-      }
-      table { border-collapse: collapse; }
-      th, td { padding: 5px 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
     <!-- UI 表單 for marker-a -->
