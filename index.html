@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR 行程 MVP</title>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe-mindar-image.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/supabase.min.js"></script>
@@ -26,24 +27,23 @@
     <!-- UI 表單 for marker-a -->
     <div id="schedule-ui-a" class="schedule-ui">
       <table>
-        <tr><th>時間</th><th>活動</th></tr>
-        <tr><td>08:00-10:00</td><td><select id="a-slot1"><option>空</option><option>課程</option><option>吃飯</option><option>打工</option></select></td></tr>
-        <tr><td>10:00-12:00</td><td><select id="a-slot2"><option>空</option><option>課程</option><option>娛樂</option><option>雜事</option></select></td></tr>
+        <tr><th>08:00-10:00</th><td><select id="a-slot1"><option>空</option><option>課程</option><option>吃飯</option><option>打工</option></select></td></tr>
+        <tr><th>10:00-12:00</th><td><select id="a-slot2"><option>空</option><option>課程</option><option>娛樂</option><option>雜事</option></select></td></tr>
       </table>
-      <button id="submitBtnA">送出行程</button>
+      <button id="submitBtnA">送出</button>
     </div>
 
     <!-- UI 表單 for marker-b -->
     <div id="schedule-ui-b" class="schedule-ui">
       <table>
-        <tr><th>時間</th><th>活動</th></tr>
-        <tr><td>08:00-10:00</td><td><select id="b-slot1"><option>空</option><option>課程</option><option>吃飯</option><option>打工</option></select></td></tr>
-        <tr><td>10:00-12:00</td><td><select id="b-slot2"><option>空</option><option>課程</option><option>娛樂</option><option>雜事</option></select></td></tr>
+        <tr><th>08:00-10:00</th><td><select id="b-slot1"><option>空</option><option>課程</option><option>吃飯</option><option>打工</option></select></td></tr>
+        <tr><th>10:00-12:00</th><td><select id="b-slot2"><option>空</option><option>課程</option><option>娛樂</option><option>雜事</option></select></td></tr>
       </table>
-      <button id="submitBtnB">送出行程</button>
+      <button id="submitBtnB">送出</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; filterMinCF:0.0001; filterBeta: 0.001" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
+    <!-- AR 掃描場景 -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
       <a-assets>
         <img id="marker-a" src="./schedules/schedule-a.png" />
         <img id="marker-b" src="./schedules/schedule-b.png" />
@@ -54,64 +54,54 @@
       <a-entity mindar-image-target="targetIndex: 0" id="target-a">
         <a-image src="#marker-a" position="0 0 0" scale="1.8 1.2 1"></a-image>
       </a-entity>
+
       <a-entity mindar-image-target="targetIndex: 1" id="target-b">
         <a-image src="#marker-b" position="0 0 0" scale="1.8 1.2 1"></a-image>
       </a-entity>
     </a-scene>
 
+    <!-- Supabase 紀錄程式 -->
     <script>
-      const supabaseUrl = 'https://rbqgkbjffzbcrwtxmnxn.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJicWdrYmpmZnpiY3J3dHhtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MjY2NzYsImV4cCI6MjA2MjAwMjY3Nn0.g9jUWNE4D-33qnwYl47UsnxcxmKACZlDUbGabM3xpVE';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const supabase = window.supabase.createClient(
+        'https://rbqgkbjffzbcrwtxmnxn.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJicWdrYmpmZnpiY3J3dHhtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MjY2NzYsImV4cCI6MjA2MjAwMjY3Nn0.g9jUWNE4D-33qnwYl47UsnxcxmKACZlDUbGabM3xpVE'
+      );
 
       window.addEventListener('DOMContentLoaded', () => {
-        const targetA = document.querySelector('#target-a');
-        const targetB = document.querySelector('#target-b');
         const uiA = document.getElementById('schedule-ui-a');
         const uiB = document.getElementById('schedule-ui-b');
 
-        targetA.addEventListener('targetFound', () => {
+        document.querySelector('#target-a').addEventListener('targetFound', () => {
           uiA.style.display = 'block';
         });
-        targetA.addEventListener('targetLost', () => {
+        document.querySelector('#target-a').addEventListener('targetLost', () => {
           uiA.style.display = 'none';
         });
-
-        targetB.addEventListener('targetFound', () => {
+        document.querySelector('#target-b').addEventListener('targetFound', () => {
           uiB.style.display = 'block';
         });
-        targetB.addEventListener('targetLost', () => {
+        document.querySelector('#target-b').addEventListener('targetLost', () => {
           uiB.style.display = 'none';
         });
 
         document.getElementById('submitBtnA').addEventListener('click', async () => {
-          const slot1 = document.getElementById('a-slot1').value;
-          const slot2 = document.getElementById('a-slot2').value;
-          const { data, error } = await supabase.from('schedules').insert([
-            { user_id: 'marker-a', slot_time: '08:00-10:00', activity: slot1 },
-            { user_id: 'marker-a', slot_time: '10:00-12:00', activity: slot2 }
+          const s1 = document.getElementById('a-slot1').value;
+          const s2 = document.getElementById('a-slot2').value;
+          await supabase.from('schedules').insert([
+            { user_id: 'marker-a', slot_time: '08:00-10:00', activity: s1 },
+            { user_id: 'marker-a', slot_time: '10:00-12:00', activity: s2 }
           ]);
-          if (error) {
-            alert('❌ A 儲存失敗');
-            console.error(error);
-          } else {
-            alert('✅ A 行程已儲存');
-          }
+          alert('✅ 已送出 A 行程');
         });
 
         document.getElementById('submitBtnB').addEventListener('click', async () => {
-          const slot1 = document.getElementById('b-slot1').value;
-          const slot2 = document.getElementById('b-slot2').value;
-          const { data, error } = await supabase.from('schedules').insert([
-            { user_id: 'marker-b', slot_time: '08:00-10:00', activity: slot1 },
-            { user_id: 'marker-b', slot_time: '10:00-12:00', activity: slot2 }
+          const s1 = document.getElementById('b-slot1').value;
+          const s2 = document.getElementById('b-slot2').value;
+          await supabase.from('schedules').insert([
+            { user_id: 'marker-b', slot_time: '08:00-10:00', activity: s1 },
+            { user_id: 'marker-b', slot_time: '10:00-12:00', activity: s2 }
           ]);
-          if (error) {
-            alert('❌ B 儲存失敗');
-            console.error(error);
-          } else {
-            alert('✅ B 行程已儲存');
-          }
+          alert('✅ 已送出 B 行程');
         });
       });
     </script>
