@@ -1,99 +1,232 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>Robot AR Schedule</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .player-container { margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; }
-        .schedule { border: 1px dashed #ddd; min-height: 100px; margin-bottom: 10px; padding: 10px; }
-        .task-item { background-color: #f9f9f9; border: 1px solid #eee; padding: 5px; margin-bottom: 5px; border-radius: 3px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR 行程表</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/supabase.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    .schedule-ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+      z-index: 999;
+    }
+    table { border-collapse: collapse; }
+    th, td { padding: 5px 10px; border: 1px solid #ccc; }
+    select { width: 100%; }
+  </style>
 </head>
 <body>
-    <h1>Robot AR Schedule</h1>
+  <!-- 行程表 UI -->
+  <div id="schedule-ui" class="schedule-ui">
+    <h3 id="player-title">玩家行程表</h3>
+    <table id="schedule-table">
+      <thead>
+        <tr>
+          <th>時間</th>
+          <th>星期一</th>
+          <th>星期二</th>
+          <th>星期三</th>
+          <th>星期四</th>
+          <th>星期五</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- JavaScript 會動態生成行程表 -->
+      </tbody>
+    </table>
+    <button id="submitBtn">送出行程</button>
+  </div>
 
-    <div class="player-container">
-        <h2>玩家一</h2>
-        <div id="player1-schedule" class="schedule"></div>
-        <div>
-            <input type="text" id="player1-task" placeholder="輸入任務">
-            <input type="time" id="player1-time">
-            <button onclick="addTask('player1')">新增任務</button>
-        </div>
-    </div>
+  <!-- AR 場景 -->
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
+    <a-assets>
+      <img id="marker-a" src="./images/marker-a.png" />
+      <img id="marker-b" src="./images/marker-b.png" />
+    </a-assets>
 
-    <div class="player-container">
-        <h2>玩家二</h2>
-        <div id="player2-schedule" class="schedule"></div>
-        <div>
-            <input type="text" id="player2-task" placeholder="輸入任務">
-            <input type="time" id="player2-time">
-            <button onclick="addTask('player2')">新增任務</button>
-        </div>
-    </div>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // 請將你的 Supabase URL 和 API 金鑰填入這裡
-        const supabaseUrl = 'https://rbqgkbjffzbcrwtxmnxn.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJicWdrYmpmZnpiY3J3dHhtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MjY2NzYsImV4cCI6MjA2MjAwMjY3Nn0.g9jUWNE4D-33qnwYl47UsnxcxmKACZlDUbGabM3xpVE';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+    <a-entity mindar-image-target="targetIndex: 0" id="target-a">
+      <a-image src="#marker-a" position="0 0 0" scale="1.8 1.2 1"></a-image>
+    </a-entity>
 
-        async function loadTasks(player) {
-            const { data, error } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('player', player)
-                .order('time');
+    <a-entity mindar-image-target="targetIndex: 1" id="target-b">
+      <a-image src="#marker-b" position="0 0 0" scale="1.8 1.2 1"></a-image>
+    </a-entity>
+  </a-scene>
 
-            const scheduleDivId = `player${player}-schedule`;
-            const scheduleDiv = document.getElementById(scheduleDivId);
-            scheduleDiv.innerHTML = ''; // 清空之前的任務
+  <script>
+    // 初始化 Supabase
+    const supabase = window.supabase.createClient(
+      'https://rbqgkbjffzbcrwtxmnxn.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJicWdrYmpmZnpiY3J3dHhtbnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MjY2NzYsImV4cCI6MjA2MjAwMjY3Nn0.g9jUWNE4D-33qnwYl47UsnxcxmKACZlDUbGabM3xpVE'
+    );
 
-            if (error) {
-                console.error('載入任務失敗:', error);
-                alert('載入任務失敗！請檢查控制台。');
-            } else if (data) {
-                data.forEach(task => {
-                    const taskItem = document.createElement('div');
-                    taskItem.classList.add('task-item');
-                    taskItem.textContent = `${task.time} - ${task.task}`;
-                    scheduleDiv.appendChild(taskItem);
-                });
-            }
+    const scheduleUI = document.getElementById('schedule-ui');
+    const scheduleTableBody = document.querySelector('#schedule-table tbody');
+    const submitBtn = document.getElementById('submitBtn');
+    const playerTitle = document.getElementById('player-title');
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const timeSlots = [
+      '08:00–10:00',
+      '10:00–12:00',
+      '12:00–14:00',
+      '14:00–16:00',
+      '16:00–18:00',
+      '18:00–20:00'
+    ];
+
+    let currentPlayer = '';
+
+    // 生成行程表
+    function generateScheduleTable() {
+      scheduleTableBody.innerHTML = '';
+      timeSlots.forEach(slot => {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        timeCell.textContent = slot;
+        row.appendChild(timeCell);
+
+        days.forEach(day => {
+          const cell = document.createElement('td');
+          const select = document.createElement('select');
+          select.innerHTML = `
+            <option value="">空</option>
+            <option value="課程">課程</option>
+            <option value="吃飯">吃飯</option>
+            <option value="打工">打工</option>
+            <option value="娛樂">娛樂</option>
+            <option value="雜事">雜事</option>
+          `;
+          select.dataset.day = day;
+          select.dataset.timeSlot = slot;
+          cell.appendChild(select);
+          row.appendChild(cell);
+        });
+
+        scheduleTableBody.appendChild(row);
+      });
+    }
+
+    // 顯示行程表
+    function showScheduleUI(player) {
+      currentPlayer = player;
+      playerTitle.textContent = `玩家 ${player.toUpperCase()} 的行程表`;
+      scheduleUI.style.display = 'block';
+      loadScheduleData();
+    }
+
+    // 隱藏行程表
+    function hideScheduleUI() {
+      scheduleUI.style.display = 'none';
+    }
+
+    // 載入行程資料
+    async function loadScheduleData() {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('user_id', currentPlayer);
+
+      if (error) {
+        console.error('載入行程資料失敗', error);
+        return;
+      }
+
+      data.forEach(entry => {
+        const select = scheduleTableBody.querySelector(
+          `select[data-day="${entry.day}"][data-time-slot="${entry.time_slot}"]`
+        );
+        if (select) {
+          select.value = entry.activity;
         }
+      });
+    }
 
-        async function addTask(player) {
-            const taskInputId = `player${player}-task`;
-            const timeInputId = `player${player}-time`;
-            const task = document.getElementById(taskInputId).value;
-            const time = document.getElementById(timeInputId).value;
+    // 送出行程
+    submitBtn.addEventListener('click', async () => {
+      const selects = scheduleTableBody.querySelectorAll('select');
+      const entries = [];
 
-            if (task && time) {
-                const { error } = await supabase
-                    .from('tasks')
-                    .insert([{ player: player, task: task, time: time }]);
-
-                if (error) {
-                    console.error('新增任務失敗:', error);
-                    alert('新增任務失敗！請檢查控制台。');
-                } else {
-                    // 重新載入該玩家的任務以即時顯示
-                    loadTasks(player);
-                    // 清空輸入框
-                    document.getElementById(taskInputId).value = '';
-                    document.getElementById(timeInputId).value = '';
-                }
-            } else {
-                alert('請輸入任務和時間！');
-            }
+      selects.forEach(select => {
+        const activity = select.value;
+        if (activity) {
+          entries.push({
+            user_id: currentPlayer,
+            day: select.dataset.day,
+            time_slot: select.dataset.timeSlot,
+            activity
+          });
         }
+      });
 
-        // 頁面載入時載入兩個玩家的任務
-        window.onload = () => {
-            loadTasks('player1');
-            loadTasks('player2');
-        };
-    </script>
+      if (entries.length > 0) {
+        // 先刪除現有的行程
+        await supabase
+          .from('schedules')
+          .delete()
+          .eq('user_id', currentPlayer);
+
+        // 插入新的行程
+        const { error } = await supabase.from('schedules').insert(entries);
+        if (error) {
+          alert('❌ 行程儲存失敗');
+          console.error(error);
+        } else {
+          alert('✅ 行程已儲存');
+        }
+      }
+    });
+
+    // 訂閱即時更新
+    supabase
+      .channel('public:schedules')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'schedules' },
+        payload => {
+          const { user_id, day, time_slot, activity } = payload.new;
+          if (user_id === currentPlayer) {
+            const select = scheduleTableBody.querySelector(
+              `select[data-day="${day}"][data-time-slot="${time_slot}"]`
+            );
+            if (select) {
+              select.value = activity;
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // AR 事件監聽
+    const targetA = document.querySelector('#target-a');
+    const targetB = document.querySelector('#target-b');
+
+    targetA.addEventListener('targetFound', () => {
+      generateScheduleTable();
+      showScheduleUI('player_a');
+    });
+    targetA.addEventListener('targetLost', () => {
+      hideScheduleUI();
+    });
+
+    targetB.addEventListener('targetFound', () => {
+      generateScheduleTable();
+      showScheduleUI('player_b');
+    });
+    targetB.addEventListener('targetLost', () => {
+      hideScheduleUI();
+    });
+  </script>
 </body>
 </html>
