@@ -1,29 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
   <head>
-   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe-mindar-image.prod.js"></script>
-  </head>
-  <body>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; filterMinCF:0.0001; filterBeta: 0.001" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
-      <a-assets>
-        <img id="schedule-a" src="./schedules/schedule-a.png" />
-        <img id="schedule-b" src="./schedules/schedule-b.png" />
-      </a-assets>
+    <meta charset="UTF-8" />
+    <title>AR 行程登記</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe-mindar-image.prod.js"></script>
+    <script type="module" src="./supabase.js"></script>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      #schedule-ui {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+        z-index: 999;
+      }
+      table { border-collapse: collapse; }
+      th, td { padding: 5px 10px; }
+    </style>
+  </head>
+
   <body>
+    <!-- UI 區塊：預設隱藏，掃到 marker 才顯示 -->
     <div id="schedule-ui">
       <h3>請選擇你的行程</h3>
       <table>
         <tr><th>時間</th><th>活動</th></tr>
-        <tr><td>08:00-10:00</td><td><select id="slot1"><option>空</option><option>課程</option><option>吃飯</option><option>打工</option></select></td></tr>
-        <tr><td>10:00-12:00</td><td><select id="slot2"><option>空</option><option>課程</option><option>娛樂</option><option>雜事</option></select></td></tr>
+        <tr><td>08:00-10:00</td>
+            <td><select id="slot1">
+              <option>空</option><option>課程</option><option>吃飯</option><option>打工</option>
+            </select></td></tr>
+        <tr><td>10:00-12:00</td>
+            <td><select id="slot2">
+              <option>空</option><option>課程</option><option>娛樂</option><option>雜事</option>
+            </select></td></tr>
       </table>
       <button id="submitBtn">送出行程</button>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; filterMinCF:0.0001; filterBeta: 0.001" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
+    <!-- AR 掃描主區塊 -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
       <a-assets>
         <img id="marker-a" src="./schedules/schedule-a.png" />
       </a-assets>
